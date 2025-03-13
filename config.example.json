@@ -1,0 +1,102 @@
+{
+    "trading": {
+        "mode": "paper",
+        "interval": 3600,
+        "symbol": "CL=F",
+        "initial_balance": 100000.0,
+        "max_open_trades": 10,
+        "risk_per_trade": 0.05
+    },
+    "data_fetch": {
+        "days": 365,
+        "interval": "1h",
+        "symbols": ["CL=F", "BZ=F", "XLE", "USO"]
+    },
+    "sentiment": {
+        "use_sentiment": true,
+        "news_days": 7,
+        "sources": ["bloomberg", "reuters", "cnbc", "wsj"],
+        "keywords": ["crude oil", "wti", "brent", "opec", "oil production", "oil demand"]
+    },
+    "satellite": {
+        "use_satellite": true,
+        "locations": [
+            "cushing_oklahoma",
+            "strait_of_hormuz",
+            "houston_ship_channel",
+            "saudi_aramco_abqaiq"
+        ],
+        "update_interval": 86400
+    },
+    "strategy": {
+        "use_ml": true,
+        "use_sentiment": true,
+        "use_satellite": true,
+        "signal_threshold": 0.7,
+        "indicators": {
+            "rsi": {
+                "period": 14,
+                "overbought": 70,
+                "oversold": 30
+            },
+            "macd": {
+                "fast_period": 12,
+                "slow_period": 26,
+                "signal_period": 9
+            },
+            "ema": {
+                "periods": [9, 21, 50, 200]
+            },
+            "adx": {
+                "period": 14,
+                "threshold": 25
+            }
+        }
+    },
+    "risk": {
+        "max_position_size": 0.05,
+        "max_portfolio_risk": 0.2,
+        "stop_loss_percent": 0.02,
+        "take_profit_percent": 0.05,
+        "trailing_stop": true,
+        "trailing_stop_percent": 0.01
+    },
+    "backtest": {
+        "start_date": "2023-01-01",
+        "end_date": "2023-12-31",
+        "initial_capital": 100000.0,
+        "commission": 0.001,
+        "slippage": 0.001
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "logs/trading_bot.log",
+        "console": true
+    },
+    "api_keys": {
+        "newsapi": "YOUR_NEWSAPI_KEY",
+        "sentinel_hub": "YOUR_SENTINEL_HUB_KEY",
+        "planet_labs": "YOUR_PLANET_LABS_KEY",
+        "maxar": "YOUR_MAXAR_KEY",
+        "alpha_vantage": "YOUR_ALPHA_VANTAGE_KEY"
+    },
+    "database": {
+        "path": "data/market_data.db",
+        "backup_interval": 86400
+    },
+    "notifications": {
+        "email": {
+            "enabled": false,
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "username": "your_email@gmail.com",
+            "password": "your_app_password",
+            "recipients": ["your_email@gmail.com"]
+        },
+        "telegram": {
+            "enabled": false,
+            "bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
+            "chat_id": "YOUR_TELEGRAM_CHAT_ID"
+        }
+    }
+}

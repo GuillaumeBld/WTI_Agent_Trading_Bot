@@ -1,0 +1,45 @@
+# Core dependencies
+pandas>=1.3.0
+numpy>=1.20.0
+pydantic>=1.8.0
+requests>=2.25.0
+SQLAlchemy>=1.4.0
+python-dateutil>=2.8.0
+
+# Data fetching
+yfinance>=0.1.70
+pandas-datareader>=0.10.0
+
+# Sentiment analysis
+transformers>=4.5.0
+torch>=1.9.0
+newsapi-python>=0.2.6
+nltk>=3.6.0
+textblob>=0.15.3
+
+# Technical analysis
+ta>=0.7.0
+ta-lib>=0.4.0
+
+# Satellite data
+Pillow>=8.2.0
+opencv-python>=4.5.0
+scikit-image>=0.18.0
+
+# Machine learning
+scikit-learn>=0.24.0
+tensorflow>=2.5.0
+keras>=2.4.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+plotly>=5.0.0
+
+# Testing
+pytest>=6.2.0
+pytest-cov>=2.12.0
+
+# Utilities
+tqdm>=4.60.0
+python-dotenv>=0.17.0
