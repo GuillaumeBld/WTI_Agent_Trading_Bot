@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  trading-bot:
+    build: .
+    container_name: wti-trading-bot
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config.json:/app/config.json
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --mode paper
+    restart: unless-stopped
+    
+  backtesting:
+    build: .
+    container_name: wti-backtesting
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config.json:/app/config.json
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --mode backtest --backtest-start 2023-01-01 --backtest-end 2023-12-31
+    profiles:
+      - backtest
