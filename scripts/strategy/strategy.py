@@ -17,11 +17,15 @@ from typing import List, Dict, Any, Optional, Union
 # Import the TradingSignal interface
 from agent_interfaces import TradingSignal
 
-# Absolute path to your CSV file with indicators:
-INDICATORS_DATA_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/crude_oil_with_indicators.csv"
+# Import utility functions
+from utils import get_data_directory, get_db_connection, setup_logger
+import os
 
-# Absolute path to the SQLite database (where signals will be stored)
-DB_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/market_data.db"
+# Use relative paths with utility functions
+INDICATORS_DATA_PATH = os.path.join(get_data_directory(), "crude_oil_with_indicators.csv")
+
+# Use relative path for SQLite database
+DB_PATH = os.path.join(get_data_directory(), "market_data.db")
 
 # Import sentiment analysis
 try:

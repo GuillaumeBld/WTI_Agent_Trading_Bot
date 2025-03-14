@@ -45,13 +45,18 @@ The `agent_manager.py` file coordinates the different agents, manages data flow 
 - **Backtesting**: Allows for backtesting of trading strategies.
 - **Paper Trading**: Allows for paper trading to test strategies without real money.
 - **Live Trading**: Supports live trading with real money.
+- **Error Handling**: Robust error handling with retry mechanisms for network operations.
+- **Docker Support**: Easy deployment with Docker and docker-compose.
+- **Portable File Paths**: Uses relative paths for better portability across environments.
 
 ## Installation
 
+### Standard Installation
+
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/agentic-trading-bot.git
-cd agentic-trading-bot
+git clone https://github.com/GuillaumeBld/WTI_Agent_Trading_Bot.git
+cd WTI_Agent_Trading_Bot
 ```
 
 2. Install the required dependencies:
@@ -65,6 +70,26 @@ cp config.example.json config.json
 ```
 
 4. Edit the configuration file to suit your needs.
+
+### Docker Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/GuillaumeBld/WTI_Agent_Trading_Bot.git
+cd WTI_Agent_Trading_Bot
+```
+
+2. Set up the configuration file:
+```bash
+cp config.example.json config.json
+```
+
+3. Edit the configuration file to suit your needs.
+
+4. Build and run with Docker Compose:
+```bash
+docker-compose up --build trading-bot
+```
 
 ## Usage
 
