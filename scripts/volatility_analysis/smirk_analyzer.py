@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-import random
+import numpy as np # For safe calculation of mean, handles empty lists by returning NaN
 
 # Adjust import path based on project structure.
 # If 'scripts' is a package and 'agent_interfaces.py' is at the root:
@@ -13,8 +13,7 @@ from agent_interfaces import OptionsChainData, VolatilitySmirkResult, OptionsCon
 class SmirkAnalyzer:
     def analyze_smirk(self, options_data: OptionsChainData, config: Optional[Dict[str, Any]] = None) -> VolatilitySmirkResult:
         """
-        MOCK IMPLEMENTATION: Analyzes volatility smirk from options chain data.
-        In a real scenario, this function would perform complex calculations.
+        Analyzes volatility smirk from options chain data using a basic calculation.
 
         Args:
             options_data (OptionsChainData): The input options chain data.
@@ -24,45 +23,89 @@ class SmirkAnalyzer:
         Returns:
             VolatilitySmirkResult: The result of the smirk analysis.
         """
-        print(f"Mock analyzing smirk for {options_data.underlying_symbol} expiry {options_data.expiry_date.strftime('%Y-%m-%d')}")
+        logger_msg_prefix = f"Smirk analysis for {options_data.underlying_symbol} expiry {options_data.expiry_date.strftime('%Y-%m-%d')}:"
+        print(f"{logger_msg_prefix} Starting analysis.")
 
-        # Mock analysis:
-        # Randomly decide sentiment or use a very simple heuristic.
-        # For example, compare average IV of OTM calls vs OTM puts if we had them clearly separated.
-        # Here, let's just generate a random result.
+        otm_call_ivs = []
+        otm_put_ivs = []
+        atm_threshold_percent = 0.02 # Consider contracts within 2% of spot as ATM
         
-        sentiment_labels = ["bullish", "bearish", "neutral"]
-        chosen_sentiment = random.choice(sentiment_labels)
-        confidence = random.uniform(0.5, 0.9)
-        
-        # Mock skewness metric
-        mock_skew = random.uniform(-0.2, 0.2) # e.g. difference between avg call IV and avg put IV
+        spot_price = options_data.spot_price
+
+        for contract in options_data.contracts:
+            if contract.implied_volatility is None or contract.implied_volatility <= 0:
+                continue # Skip contracts with no valid IV
+
+            # Determine moneyness
+            # OTM Call: strike > spot * (1 + atm_threshold_percent)
+            if contract.contract_type == "call" and contract.strike_price > spot_price * (1 + atm_threshold_percent):
+                otm_call_ivs.append(contract.implied_volatility)
+            # OTM Put: strike < spot * (1 - atm_threshold_percent)
+            elif contract.contract_type == "put" and contract.strike_price < spot_price * (1 - atm_threshold_percent):
+                otm_put_ivs.append(contract.implied_volatility)
+
+        avg_otm_call_iv = np.mean(otm_call_ivs) if otm_call_ivs else np.nan
+        avg_otm_put_iv = np.mean(otm_put_ivs) if otm_put_ivs else np.nan
+
+        skew_metric = np.nan
+        if not np.isnan(avg_otm_call_iv) and not np.isnan(avg_otm_put_iv):
+            skew_metric = avg_otm_call_iv - avg_otm_put_iv # Simple difference
+        elif not np.isnan(avg_otm_call_iv): # Only calls have valid IVs
+            skew_metric = 0.1 # Default to slightly positive if only OTM calls are significant (arbitrary)
+        elif not np.isnan(avg_otm_put_iv): # Only puts have valid IVs
+            skew_metric = -0.1 # Default to slightly negative if only OTM puts are significant (arbitrary)
+
+
+        # Default sentiment and confidence
+        sentiment_label = "neutral"
+        calculated_confidence = 0.5 # Base confidence for neutral
 
         # Use thresholds from config if available
         if config:
-            bullish_threshold = config.get('smirk_interpretation_thresholds', {}).get('bullish_skew_diff', 0.05)
-            bearish_threshold = config.get('smirk_interpretation_thresholds', {}).get('bearish_skew_diff', -0.05)
-            min_confidence = config.get('smirk_interpretation_thresholds', {}).get('min_confidence', 0.6)
-
-            if mock_skew > bullish_threshold:
-                chosen_sentiment = "bullish"
-                confidence = max(min_confidence, random.uniform(min_confidence, 0.95))
-            elif mock_skew < bearish_threshold:
-                chosen_sentiment = "bearish"
-                confidence = max(min_confidence, random.uniform(min_confidence, 0.95))
-            else:
-                chosen_sentiment = "neutral"
-                confidence = random.uniform(0.5, min_confidence)
-
+            thresholds = config.get('volatility_analysis', {}).get('smirk_interpretation_thresholds', {})
+            bullish_threshold = thresholds.get('bullish_skew_diff', 0.02) # e.g. OTM Call IVs 2% > OTM Put IVs
+            bearish_threshold = thresholds.get('bearish_skew_diff', -0.02) # e.g. OTM Put IVs 2% > OTM Call IVs
+            min_confidence_threshold = thresholds.get('min_confidence', 0.6)
+            
+            if not np.isnan(skew_metric):
+                if skew_metric > bullish_threshold:
+                    sentiment_label = "bullish"
+                    # Scale confidence by how much it exceeds threshold, up to 0.95
+                    calculated_confidence = min(0.95, min_confidence_threshold + (skew_metric - bullish_threshold) * 2) 
+                elif skew_metric < bearish_threshold:
+                    sentiment_label = "bearish"
+                    # Scale confidence similarly for bearish
+                    calculated_confidence = min(0.95, min_confidence_threshold + abs(skew_metric - bearish_threshold) * 2)
+                else: # Between bullish and bearish thresholds
+                    sentiment_label = "neutral"
+                    calculated_confidence = min_confidence_threshold - 0.1 # Slightly less than min_confidence for clear signals
+            else: # Skew metric is NaN (e.g. no OTM options on one or both sides)
+                sentiment_label = "neutral"
+                calculated_confidence = 0.4 # Lower confidence if data is insufficient
+        else: # No config provided, use some defaults (though config should always be passed from AgentManager)
+            if not np.isnan(skew_metric):
+                if skew_metric > 0.02: sentiment_label = "bullish"; calculated_confidence = 0.65
+                elif skew_metric < -0.02: sentiment_label = "bearish"; calculated_confidence = 0.65
+        
+        print(f"{logger_msg_prefix} OTM Call IVs ({len(otm_call_ivs)}): {avg_otm_call_iv:.4f if not np.isnan(avg_otm_call_iv) else 'N/A'}. " +
+              f"OTM Put IVs ({len(otm_put_ivs)}): {avg_otm_put_iv:.4f if not np.isnan(avg_otm_put_iv) else 'N/A'}. " +
+              f"Skew: {skew_metric:.4f if not np.isnan(skew_metric) else 'N/A'}. Sentiment: {sentiment_label} ({calculated_confidence:.2f})")
 
         return VolatilitySmirkResult(
             date=datetime.now(),
             underlying_symbol=options_data.underlying_symbol,
             expiry_date=options_data.expiry_date,
-            skewness_metric=mock_skew,
-            sentiment_label=chosen_sentiment,
-            confidence=round(confidence, 2),
-            details={"message": "Mock analysis complete.", "spot_price_at_analysis": options_data.spot_price}
+            skewness_metric=skew_metric if not np.isnan(skew_metric) else None, # Store None if NaN
+            sentiment_label=sentiment_label,
+            confidence=round(calculated_confidence, 2),
+            details={
+                "message": "Smirk analysis complete.",
+                "spot_price_at_analysis": spot_price,
+                "avg_otm_call_iv": avg_otm_call_iv if not np.isnan(avg_otm_call_iv) else None,
+                "avg_otm_put_iv": avg_otm_put_iv if not np.isnan(avg_otm_put_iv) else None,
+                "num_otm_calls": len(otm_call_ivs),
+                "num_otm_puts": len(otm_put_ivs)
+            }
         )
 
 # Example usage (optional, for testing the script directly)

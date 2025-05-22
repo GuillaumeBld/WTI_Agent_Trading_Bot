@@ -1,20 +1,19 @@
 """
-Agent Manager Module
+Agent Manager Module for BTC Volatility Smirk Trading Bot
 
 This module coordinates the different agents in the trading system:
-- Data Fetching Agent
-- Sentiment Analysis Agent
-- Technical Analysis Agent
-- Strategy Agent
-- Risk Management Agent
+- Data Fetching Agent (for BTC Options Data)
+- Volatility Smirk Analysis Agent
+- Strategy Agent (interpreting smirk analysis for trading signals)
+- Risk Management Agent (integrated within trade execution)
 - Trade Execution Agent
 
 The Agent Manager is responsible for:
-1. Initializing all agents
-2. Coordinating data flow between agents
-3. Scheduling agent execution
-4. Handling errors and retries
-5. Logging agent activities
+1. Initializing all relevant agents.
+2. Coordinating data flow between agents (options data -> smirk analysis -> strategy).
+3. Scheduling agent execution.
+4. Handling errors and retries.
+5. Logging agent activities.
 """
 
 import os
@@ -321,37 +320,52 @@ class AgentManager:
     
     def run_trading_cycle(self):
         """
-        Run a complete trading cycle:
-        1. Fetch market data
-        2. Analyze sentiment
-        3. Generate trading signals
-        4. Execute trades
+        Run a complete trading cycle using the configured symbol and data processing path.
         """
         logger.info("Starting trading cycle...")
         
-        # Fetch market data
-        market_data = self.fetch_market_data()
-        if not market_data:
-            logger.error("Failed to fetch market data. Aborting trading cycle.")
-            return
+        current_symbol = self.config.get('trading', {}).get('symbol', 'BTC-USD')
+        days_history = self.config.get('data_fetch', {}).get('days', 30) # Used for non-BTC OHLCV
+
+        # Step 1: Fetch data for the current symbol
+        # This will put OptionsChainData or MarketData into self.options_data_queue
+        self.fetch_data_for_symbol(symbol=current_symbol, days=days_history) 
         
-        # Analyze sentiment
-        sentiment_results = self.analyze_sentiment()
-        
-        # Generate trading signals
-        signals = self.generate_trading_signals(use_sentiment=bool(sentiment_results))
+        signals = []
+        if current_symbol.upper() == "BTC-USD":
+            # Step 2: Perform volatility analysis if it's BTC
+            # This consumes from self.options_data_queue and puts VolatilitySmirkResult into self.volatility_analysis_queue
+            self.perform_volatility_analysis()
+            
+            # Step 3: Generate trading signals from volatility analysis
+            # This consumes from self.volatility_analysis_queue and puts TradingSignal into self.signal_queue
+            signals = self.generate_trading_signals() 
+        else:
+            # Placeholder for non-BTC (e.g., WTI crude oil) path if it were to be fully supported alongside BTC.
+            # This might involve a different analysis (e.g., old sentiment) and signal generation path.
+            # For the current plan focused on BTC, this path results in no signals.
+            logger.info(f"Symbol {current_symbol} is not BTC-USD. Standard OHLCV data was fetched. " +
+                        "Skipping BTC-specific volatility/smirk-based signal generation for this cycle.")
+            # To make this path work for WTI, you would need to:
+            # 1. Ensure OHLCV MarketData from options_data_queue is processed by a different analysis method.
+            # 2. That method puts its results (e.g. old SentimentResult) to a queue.
+            # 3. generate_trading_signals (or another method) consumes that for WTI strategy.
+            # This is out of scope for the current BTC refactoring.
+            pass # No signals generated for non-BTC in this flow.
+
+        # Step 4: Execute trades if signals were generated
         if not signals:
-            logger.warning("No trading signals generated. Skipping trade execution.")
-            return
+            logger.warning("No trading signals generated for the current cycle. Skipping trade execution.")
+        else:
+            # This consumes from self.signal_queue
+            max_trades_to_execute = self.config.get('trading', {}).get('max_concurrent_trades', 1)
+            self.execute_trades(max_trades=max_trades_to_execute) 
         
-        # Execute trades
-        executed_trades = self.execute_trades()
-        
-        # Update portfolio
+        # Display portfolio status
         if self.execution_agent:
             self.execution_agent.display_portfolio()
         
-        logger.info("Trading cycle completed")
+        logger.info("Trading cycle completed.")
     
     def start_automated_trading(self, interval: int = 3600):
         """

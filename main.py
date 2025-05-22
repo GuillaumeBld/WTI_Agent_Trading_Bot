@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Agentic Trading Bot - Main Module
+BTC Volatility Smirk Trading Bot - Main Module
 
-This is the main entry point for the Agentic Trading Bot system.
-It initializes all agents and starts the trading process.
+This is the main entry point for the BTC Volatility Smirk Trading Bot.
+It initializes all agents and starts the trading process based on Bitcoin
+options market data and volatility smirk analysis.
 
 Usage:
     python main.py [--mode MODE] [--interval INTERVAL] [--symbol SYMBOL]
@@ -11,7 +12,7 @@ Usage:
 Options:
     --mode MODE         Trading mode: 'live', 'backtest', or 'paper' (default: 'paper')
     --interval INTERVAL Trading interval in seconds (default: 3600)
-    --symbol SYMBOL     Trading symbol (default: 'CL=F' for WTI Crude Oil)
+    --symbol SYMBOL     Trading symbol (default: 'BTC-USD' for Bitcoin)
 """
 
 import os

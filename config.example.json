@@ -13,8 +13,8 @@
         "symbols": ["BTC-USD", "ETH-USD"]
     },
     "volatility_analysis": {
-        "api_key_env_var": "OPTIONS_API_KEY",
-        "data_source_url": "https://mock.options-data-provider.com/btc",
+        "api_key_env_var": "REFINITIV_API_KEY",
+        "data_source_url": "https://api.refinitiv.com/market-data/v1/options/btc-usd",
         "monitored_expiries": ["1D", "7D", "30D"],
         "smirk_interpretation_thresholds": {
             "bullish_skew_diff": 0.05, 
