@@ -49,8 +49,8 @@ def parse_arguments():
                         help="Trading mode: 'live', 'backtest', or 'paper' (default: 'paper')")
     parser.add_argument("--interval", type=int, default=3600,
                         help="Trading interval in seconds (default: 3600)")
-    parser.add_argument("--symbol", default="CL=F",
-                        help="Trading symbol (default: 'CL=F' for WTI Crude Oil)")
+    parser.add_argument("--symbol", default="BTC-USD",
+                        help="Trading symbol (default: 'BTC-USD' for Bitcoin)")
     parser.add_argument("--config", default="config.json",
                         help="Path to configuration file (default: 'config.json')")
     parser.add_argument("--backtest-start", default=None,

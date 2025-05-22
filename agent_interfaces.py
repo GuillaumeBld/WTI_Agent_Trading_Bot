@@ -124,3 +124,42 @@ class BacktestResult(BaseModel):
     
     class Config:
         orm_mode = True
+
+
+class OptionsContractData(BaseModel):
+    strike_price: float
+    contract_type: str  # e.g., "call" or "put"
+    implied_volatility: Optional[float]
+    volume: Optional[int]
+    open_interest: Optional[int]
+    delta: Optional[float]
+    gamma: Optional[float]
+    theta: Optional[float]
+    vega: Optional[float]
+    last_traded_price: Optional[float]
+
+    class Config:
+        orm_mode = True
+
+
+class OptionsChainData(BaseModel):
+    underlying_symbol: str  # e.g., "BTC"
+    spot_price: float  # current price of the underlying asset
+    expiry_date: datetime
+    contracts: List[OptionsContractData]  # a list of OptionsContractData objects
+
+    class Config:
+        orm_mode = True
+
+
+class VolatilitySmirkResult(BaseModel):
+    date: datetime
+    underlying_symbol: str
+    expiry_date: datetime
+    skewness_metric: Optional[float]  # e.g., ratio of OTM call IV to OTM put IV, or slope of IV curve
+    sentiment_label: str  # e.g., "bullish", "bearish", "neutral"
+    confidence: float  # confidence in the sentiment_label, 0.0 to 1.0
+    details: Optional[Dict[str, Any]]  # for any additional parameters or raw data
+
+    class Config:
+        orm_mode = True

@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Union
 
 # Import the TradingSignal interface
-from agent_interfaces import TradingSignal
+from ..agent_interfaces import TradingSignal, VolatilitySmirkResult
 
 # Import utility functions
 from utils import get_data_directory, get_db_connection, setup_logger
@@ -92,6 +92,41 @@ class TradingStrategy:
             )
             signals.append(signal)
         return signals
+
+    def generate_signals_from_smirk(self, spot_price: float, smirk_result: VolatilitySmirkResult, config: Optional[Dict[str, Any]] = None) -> Optional[TradingSignal]:
+        """
+        Generates a trading signal based on volatility smirk analysis.
+
+        Args:
+            spot_price (float): The current spot price of the underlying asset (e.g., BTC).
+            smirk_result (VolatilitySmirkResult): The result from the smirk analysis.
+            config (Optional[Dict[str, Any]]): Configuration parameters, potentially from strategy section.
+
+        Returns:
+            Optional[TradingSignal]: A TradingSignal object or None if no clear signal.
+        """
+        # Default signal is HOLD
+        signal_action = 0  # -1 SELL, 0 HOLD, 1 BUY
+        
+        # Example rule-based logic:
+        # These thresholds would ideally come from the strategy configuration
+        bullish_confidence_threshold = config.get("strategy", {}).get("smirk_bullish_confidence_min", 0.7) if config else 0.7
+        bearish_confidence_threshold = config.get("strategy", {}).get("smirk_bearish_confidence_min", 0.7) if config else 0.7
+        
+        if smirk_result.sentiment_label == "bullish" and smirk_result.confidence >= bullish_confidence_threshold:
+            signal_action = 1  # BUY
+        elif smirk_result.sentiment_label == "bearish" and smirk_result.confidence >= bearish_confidence_threshold:
+            signal_action = -1  # SELL
+        
+        if signal_action != 0:
+            return TradingSignal(
+                date=datetime.now(),
+                price=spot_price, # Signal generated based on this spot price
+                signal=signal_action,
+                confidence=smirk_result.confidence, # Use confidence from smirk analysis
+                source="volatility_smirk_strategy"
+            )
+        return None # No signal if conditions not met
 
 def train_test_split(X, y, test_size=0.2, random_state=None):
     """
@@ -479,5 +514,6 @@ def main():
     print(f"Sentiment analysis: {'Enabled' if args.sentiment else 'Disabled'}")
     print("You can now proceed with backtesting the ML strategy.")
 
-if __name__ == "__main__":
-    main()
+# Main function disabled as it's based on the old WTI/ML strategy.
+# if __name__ == "__main__":
+#     main()
