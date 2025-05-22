@@ -2,7 +2,7 @@
     "trading": {
         "mode": "paper",
         "interval": 3600,
-        "symbol": "CL=F",
+        "symbol": "BTC-USD",
         "initial_balance": 100000.0,
         "max_open_trades": 10,
         "risk_per_trade": 0.05
@@ -10,13 +10,17 @@
     "data_fetch": {
         "days": 365,
         "interval": "1h",
-        "symbols": ["CL=F", "BZ=F", "XLE", "USO"]
+        "symbols": ["BTC-USD", "ETH-USD"]
     },
-    "sentiment": {
-        "use_sentiment": true,
-        "news_days": 7,
-        "sources": ["bloomberg", "reuters", "cnbc", "wsj"],
-        "keywords": ["crude oil", "wti", "brent", "opec", "oil production", "oil demand"]
+    "volatility_analysis": {
+        "api_key_env_var": "REFINITIV_API_KEY",
+        "data_source_url": "https://api.refinitiv.com/market-data/v1/options/btc-usd",
+        "monitored_expiries": ["1D", "7D", "30D"],
+        "smirk_interpretation_thresholds": {
+            "bullish_skew_diff": 0.05, 
+            "bearish_skew_diff": -0.05,
+            "min_confidence": 0.6 
+        }
     },
     "satellite": {
         "use_satellite": true,
@@ -78,7 +82,8 @@
         "sentinel_hub": "YOUR_SENTINEL_HUB_KEY",
         "planet_labs": "YOUR_PLANET_LABS_KEY",
         "maxar": "YOUR_MAXAR_KEY",
-        "alpha_vantage": "YOUR_ALPHA_VANTAGE_KEY"
+        "alpha_vantage": "YOUR_ALPHA_VANTAGE_KEY",
+        "options_data": "YOUR_OPTIONS_DATA_API_KEY"
     },
     "database": {
         "path": "data/market_data.db",

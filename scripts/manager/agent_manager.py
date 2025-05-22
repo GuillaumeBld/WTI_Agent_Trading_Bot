@@ -1,20 +1,19 @@
 """
-Agent Manager Module
+Agent Manager Module for BTC Volatility Smirk Trading Bot
 
 This module coordinates the different agents in the trading system:
-- Data Fetching Agent
-- Sentiment Analysis Agent
-- Technical Analysis Agent
-- Strategy Agent
-- Risk Management Agent
+- Data Fetching Agent (for BTC Options Data)
+- Volatility Smirk Analysis Agent
+- Strategy Agent (interpreting smirk analysis for trading signals)
+- Risk Management Agent (integrated within trade execution)
 - Trade Execution Agent
 
 The Agent Manager is responsible for:
-1. Initializing all agents
-2. Coordinating data flow between agents
-3. Scheduling agent execution
-4. Handling errors and retries
-5. Logging agent activities
+1. Initializing all relevant agents.
+2. Coordinating data flow between agents (options data -> smirk analysis -> strategy).
+3. Scheduling agent execution.
+4. Handling errors and retries.
+5. Logging agent activities.
 """
 
 import os
@@ -27,18 +26,19 @@ from typing import Dict, List, Any, Optional, Union, Callable
 
 # Import agent interfaces
 from agent_interfaces import (
-    MarketData, SentimentResult, TradingSignal, 
-    TradeExecution, Position, Portfolio, BacktestResult
+    MarketData, TradingSignal, TradeExecution, Position, Portfolio, BacktestResult,
+    OptionsChainData, VolatilitySmirkResult # Added these
 )
 
 # Import utility functions
 from utils import get_data_directory, get_db_connection, setup_logger
 
 # Import agents
-# Import agents
 from scripts.data_fetch.data_fetch import fetch_market_data, convert_to_market_data
-from scripts.sentiment.sentiment_analysis import SentimentAnalyzer
-from scripts.strategy.strategy import TradingStrategy, generate_signals_with_ml
+# fetch_market_data will be kept for non-BTC, convert_to_market_data for OHLCV
+from scripts.data_fetch.btc_options_fetch import fetch_btc_options_data # Added
+from scripts.volatility_analysis.smirk_analyzer import SmirkAnalyzer # Added
+from scripts.strategy.strategy import TradingStrategy # generate_signals_with_ml might be removed later
 from scripts.risk.trade_execution import InvestmentTracker, record_trade
 from scripts.indicators.indicators import calculate_indicators
 
@@ -61,16 +61,16 @@ class AgentManager:
         self.db_path = os.path.join(self.data_dir, "market_data.db")
         
         # Initialize message queues for inter-agent communication
-        self.market_data_queue = queue.Queue()
-        self.sentiment_queue = queue.Queue()
+        self.options_data_queue = queue.Queue() # Renamed from market_data_queue
+        self.volatility_analysis_queue = queue.Queue() # Renamed from sentiment_queue
         self.signal_queue = queue.Queue()
         self.trade_queue = queue.Queue()
         
         # Initialize agents
-        self.data_agent = None
-        self.sentiment_agent = None
+        self.data_agent = None # This specific agent might be removed if fetching is done directly
+        self.smirk_analyzer_agent = None # Changed from sentiment_agent
         self.strategy_agent = None
-        self.risk_agent = None
+        self.risk_agent = None # This specific agent might be removed if risk management is part of execution
         self.execution_agent = None
         
         # Initialize agent threads
@@ -88,13 +88,13 @@ class AgentManager:
         """
         logger.info("Initializing agents...")
         
-        # Initialize sentiment agent
+        # Initialize Smirk Analyzer agent (formerly sentiment agent)
         try:
-            self.sentiment_agent = SentimentAnalyzer()
-            logger.info("Sentiment Agent initialized")
+            self.smirk_analyzer_agent = SmirkAnalyzer()
+            logger.info("Smirk Analyzer Agent initialized")
         except Exception as e:
-            logger.error(f"Error initializing Sentiment Agent: {e}")
-            self.sentiment_agent = None
+            logger.error(f"Error initializing Smirk Analyzer Agent: {e}")
+            self.smirk_analyzer_agent = None
         
         # Initialize strategy agent
         try:
@@ -114,122 +114,122 @@ class AgentManager:
         
         logger.info("All agents initialized")
     
-    def fetch_market_data(self, symbol: str = "CL=F", days: int = 30) -> List[MarketData]:
+    def fetch_data_for_symbol(self, symbol: str, days: int = 30) -> None:
         """
-        Fetch market data for the specified symbol and time period.
-        
-        Args:
-            symbol (str, optional): Symbol to fetch data for. Defaults to "CL=F" (WTI Crude Oil).
-            days (int, optional): Number of days of historical data to fetch. Defaults to 30.
-            
-        Returns:
-            List[MarketData]: List of MarketData objects.
+        Fetches appropriate data (OHLCV or Options) based on the symbol.
+        Puts MarketData (for OHLCV) or OptionsChainData into respective queues.
         """
-        logger.info(f"Fetching market data for {symbol} for the past {days} days...")
+        logger.info(f"Fetching data for {symbol}...")
+        if symbol.upper() == "BTC-USD": # Check against configured BTC symbol
+            try:
+                # Fetch options data using the new fetcher
+                # The API key and expiries should come from self.config
+                api_key_env_var = self.config.get('volatility_analysis', {}).get('api_key_env_var', 'OPTIONS_API_KEY')
+                api_key = os.environ.get(api_key_env_var)
+                if not api_key:
+                    logger.error(f"API key environment variable {api_key_env_var} not set.")
+                    return
+
+                monitored_expiries = self.config.get('volatility_analysis', {}).get('monitored_expiries', ["1D", "7D"])
+                
+                options_chain_list = fetch_btc_options_data(api_key=api_key, symbol=symbol, expiries=monitored_expiries)
+                
+                if not options_chain_list:
+                    logger.error(f"Failed to fetch BTC options data for {symbol}")
+                    return
+
+                for options_chain in options_chain_list:
+                    self.options_data_queue.put(options_chain) # Use the renamed queue
+                logger.info(f"Fetched and queued {len(options_chain_list)} BTC options chains for {symbol}")
+
+            except Exception as e:
+                logger.error(f"Error fetching BTC options data for {symbol}: {e}")
+        else: # Existing logic for OHLCV data (e.g., for WTI)
+            try:
+                df = fetch_market_data(days=days, symbol=symbol) # Original OHLCV fetcher
+                if df is None:
+                    logger.error(f"Failed to fetch market data for {symbol}")
+                    return
+                
+                df_with_indicators = calculate_indicators(df) # Keep for non-BTC
+                market_data_list = convert_to_market_data(df_with_indicators)
+                
+                for data_item in market_data_list: # Renamed 'data' to 'data_item' to avoid conflict
+                    # OHLCV data still goes to a queue. If AgentManager only handles one type at a time,
+                    # this queue might be the same options_data_queue or a different one.
+                    # For simplicity, let's assume non-BTC data isn't processed further in this BTC-focused plan.
+                    # Or, ensure the old market_data_queue is used for this path if needed.
+                    # For this plan, let's put it in a generic queue that won't be picked up by smirk analysis.
+                    # To avoid error, we can use self.options_data_queue but it will be mixed type.
+                    # A better solution would be separate queues or a flag in the queued item.
+                    # For now, let's assume this path (non-BTC) is not the primary focus of the trading cycle.
+                    # We'll put it in 'options_data_queue' but the processor needs to be careful.
+                    # A cleaner way: have a separate market_data_queue for OHLCV if both are active.
+                    # Let's assume for this refactor, if symbol is not BTC, this queue won't be used by new logic.
+                    self.options_data_queue.put(data_item) # This will mix types if not careful.
+                                                       # Or use a different queue if WTI is still to be traded.
+
+                logger.info(f"Fetched and queued {len(market_data_list)} OHLCV records for {symbol}")
+            except Exception as e:
+                logger.error(f"Error fetching market data for {symbol}: {e}")
+
+    def perform_volatility_analysis(self) -> List[VolatilitySmirkResult]:
+        logger.info("Performing volatility smirk analysis...")
         
-        try:
-            # Fetch market data
-            df = fetch_market_data(days=days, symbol=symbol)
-            if df is None:
-                logger.error("Failed to fetch market data")
-                return []
-            
-            # Calculate indicators
-            df_with_indicators = calculate_indicators(df)
-            
-            # Convert to MarketData objects
-            market_data_list = convert_to_market_data(df_with_indicators)
-            
-            logger.info(f"Fetched {len(market_data_list)} market data records")
-            
-            # Put market data in queue for other agents
-            for data in market_data_list:
-                self.market_data_queue.put(data)
-            
-            return market_data_list
-        except Exception as e:
-            logger.error(f"Error fetching market data: {e}")
+        if self.smirk_analyzer_agent is None:
+            logger.error("Smirk Analyzer Agent not initialized")
             return []
+        
+        results = []
+        # Process all OptionsChainData items from the queue
+        while not self.options_data_queue.empty():
+            options_data = self.options_data_queue.get()
+            if not isinstance(options_data, OptionsChainData): # Skip if not options data
+                logger.warning(f"Skipping item of type {type(options_data)} in options_data_queue during smirk analysis.")
+                continue
+
+            try:
+                # Pass relevant config to smirk analyzer
+                smirk_config = self.config.get('volatility_analysis', {})
+                smirk_result = self.smirk_analyzer_agent.analyze_smirk(options_data, config=smirk_config)
+                if smirk_result:
+                    results.append(smirk_result)
+                    self.volatility_analysis_queue.put(smirk_result) # Use renamed queue
+            except Exception as e:
+                logger.error(f"Error during smirk analysis for {options_data.underlying_symbol} expiry {options_data.expiry_date}: {e}")
+        
+        logger.info(f"Generated {len(results)} volatility smirk results")
+        return results
     
-    def analyze_sentiment(self) -> List[SentimentResult]:
-        """
-        Run sentiment analysis on news articles.
-        
-        Returns:
-            List[SentimentResult]: List of SentimentResult objects.
-        """
-        logger.info("Running sentiment analysis...")
-        
-        if self.sentiment_agent is None:
-            logger.error("Sentiment Agent not initialized")
-            return []
-        
-        try:
-            # Run sentiment analysis
-            sentiment_results = self.sentiment_agent.run()
-            
-            logger.info(f"Generated {len(sentiment_results)} sentiment results")
-            
-            # Put sentiment results in queue for other agents
-            for result in sentiment_results:
-                self.sentiment_queue.put(result)
-            
-            return sentiment_results
-        except Exception as e:
-            logger.error(f"Error running sentiment analysis: {e}")
-            return []
-    
-    def generate_trading_signals(self, use_sentiment: bool = True) -> List[TradingSignal]:
-        """
-        Generate trading signals based on market data and sentiment analysis.
-        
-        Args:
-            use_sentiment (bool, optional): Whether to use sentiment analysis. Defaults to True.
-            
-        Returns:
-            List[TradingSignal]: List of TradingSignal objects.
-        """
-        logger.info("Generating trading signals...")
+    def generate_trading_signals(self) -> List[TradingSignal]: # Removed use_sentiment argument
+        logger.info("Generating trading signals from volatility analysis...")
         
         if self.strategy_agent is None:
             logger.error("Strategy Agent not initialized")
             return []
+
+        signals = []
+        # strategy_config = self.config.get('strategy', {}) # Not used directly here, but passed to smirk
+
+        while not self.volatility_analysis_queue.empty():
+            smirk_result = self.volatility_analysis_queue.get()
+            try:
+                # Extract spot price used during smirk analysis (assuming it's in details)
+                spot_price = smirk_result.details.get("spot_price_at_analysis")
+                if not spot_price:
+                    logger.warning(f"Spot price not found in SmirkResult details for {smirk_result.underlying_symbol}. Cannot generate signal.")
+                    continue
+
+                # Pass strategy config (entire self.config for simplicity, strategy can pick what it needs)
+                signal = self.strategy_agent.generate_signals_from_smirk(spot_price, smirk_result, config=self.config)
+                if signal:
+                    signals.append(signal)
+                    self.signal_queue.put(signal)
+            except Exception as e:
+                logger.error(f"Error generating trading signal from smirk result for {smirk_result.underlying_symbol}: {e}")
         
-        try:
-            # Get market data from queue
-            market_data_list = []
-            while not self.market_data_queue.empty():
-                market_data_list.append(self.market_data_queue.get())
-            
-            if not market_data_list:
-                logger.warning("No market data available for signal generation")
-                return []
-            
-            # Convert MarketData objects to dictionary format expected by strategy
-            data = []
-            for md in market_data_list:
-                data.append({
-                    'Date': md.date,
-                    'Open': md.open,
-                    'High': md.high,
-                    'Low': md.low,
-                    'Close': md.close,
-                    'Volume': md.volume
-                })
-            
-            # Generate signals
-            signals = generate_signals_with_ml(data, use_sentiment=use_sentiment)
-            
-            logger.info(f"Generated {len(signals)} trading signals")
-            
-            # Put signals in queue for other agents
-            for signal in signals:
-                self.signal_queue.put(signal)
-            
-            return signals
-        except Exception as e:
-            logger.error(f"Error generating trading signals: {e}")
-            return []
+        logger.info(f"Generated {len(signals)} trading signals")
+        return signals
     
     def execute_trades(self, max_trades: int = 1) -> List[TradeExecution]:
         """
@@ -267,7 +267,7 @@ class AgentManager:
                     # Create a TradeExecution object
                     trade = TradeExecution(
                         date=datetime.now(),
-                        symbol="CL=F",
+                        symbol=self.config.get('trading', {}).get('symbol', 'BTC-USD'), # Use configured symbol
                         order_type="BUY",
                         quantity=1.0,  # Will be calculated by the execution agent
                         price=signal.price,
@@ -291,7 +291,7 @@ class AgentManager:
                     # Create a TradeExecution object
                     trade = TradeExecution(
                         date=datetime.now(),
-                        symbol="CL=F",
+                        symbol=self.config.get('trading', {}).get('symbol', 'BTC-USD'), # Use configured symbol
                         order_type="SELL",
                         quantity=1.0,  # Will be calculated by the execution agent
                         price=signal.price,
@@ -320,37 +320,52 @@ class AgentManager:
     
     def run_trading_cycle(self):
         """
-        Run a complete trading cycle:
-        1. Fetch market data
-        2. Analyze sentiment
-        3. Generate trading signals
-        4. Execute trades
+        Run a complete trading cycle using the configured symbol and data processing path.
         """
         logger.info("Starting trading cycle...")
         
-        # Fetch market data
-        market_data = self.fetch_market_data()
-        if not market_data:
-            logger.error("Failed to fetch market data. Aborting trading cycle.")
-            return
+        current_symbol = self.config.get('trading', {}).get('symbol', 'BTC-USD')
+        days_history = self.config.get('data_fetch', {}).get('days', 30) # Used for non-BTC OHLCV
+
+        # Step 1: Fetch data for the current symbol
+        # This will put OptionsChainData or MarketData into self.options_data_queue
+        self.fetch_data_for_symbol(symbol=current_symbol, days=days_history) 
         
-        # Analyze sentiment
-        sentiment_results = self.analyze_sentiment()
-        
-        # Generate trading signals
-        signals = self.generate_trading_signals(use_sentiment=bool(sentiment_results))
+        signals = []
+        if current_symbol.upper() == "BTC-USD":
+            # Step 2: Perform volatility analysis if it's BTC
+            # This consumes from self.options_data_queue and puts VolatilitySmirkResult into self.volatility_analysis_queue
+            self.perform_volatility_analysis()
+            
+            # Step 3: Generate trading signals from volatility analysis
+            # This consumes from self.volatility_analysis_queue and puts TradingSignal into self.signal_queue
+            signals = self.generate_trading_signals() 
+        else:
+            # Placeholder for non-BTC (e.g., WTI crude oil) path if it were to be fully supported alongside BTC.
+            # This might involve a different analysis (e.g., old sentiment) and signal generation path.
+            # For the current plan focused on BTC, this path results in no signals.
+            logger.info(f"Symbol {current_symbol} is not BTC-USD. Standard OHLCV data was fetched. " +
+                        "Skipping BTC-specific volatility/smirk-based signal generation for this cycle.")
+            # To make this path work for WTI, you would need to:
+            # 1. Ensure OHLCV MarketData from options_data_queue is processed by a different analysis method.
+            # 2. That method puts its results (e.g. old SentimentResult) to a queue.
+            # 3. generate_trading_signals (or another method) consumes that for WTI strategy.
+            # This is out of scope for the current BTC refactoring.
+            pass # No signals generated for non-BTC in this flow.
+
+        # Step 4: Execute trades if signals were generated
         if not signals:
-            logger.warning("No trading signals generated. Skipping trade execution.")
-            return
+            logger.warning("No trading signals generated for the current cycle. Skipping trade execution.")
+        else:
+            # This consumes from self.signal_queue
+            max_trades_to_execute = self.config.get('trading', {}).get('max_concurrent_trades', 1)
+            self.execute_trades(max_trades=max_trades_to_execute) 
         
-        # Execute trades
-        executed_trades = self.execute_trades()
-        
-        # Update portfolio
+        # Display portfolio status
         if self.execution_agent:
             self.execution_agent.display_portfolio()
         
-        logger.info("Trading cycle completed")
+        logger.info("Trading cycle completed.")
     
     def start_automated_trading(self, interval: int = 3600):
         """

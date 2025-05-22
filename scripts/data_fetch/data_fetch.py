@@ -6,10 +6,12 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Union
 
 # Import the MarketData interface
-from agent_interfaces import MarketData
+from agent_interfaces import MarketData, OptionsChainData
 # Import utility functions
 from utils import get_data_directory, get_db_connection, setup_logger
 import os
+# Import for fetching BTC options data
+from .btc_options_fetch import fetch_btc_options_data
 
 # Set up logging
 logger = setup_logger("data_fetch", os.path.join("logs", "data_fetch.log"))
@@ -33,6 +35,14 @@ def fetch_market_data(days=365, symbol="CL=F") -> Optional[pd.DataFrame]:
     Returns:
         Optional[pd.DataFrame]: DataFrame with market data or None if fetch failed
     """
+    logger.info(f"Attempting to fetch market data for symbol: {symbol}")
+
+    if symbol.upper() == "BTC-USD": # Or whatever BTC symbol is configured
+        logger.info("BTC symbol detected. Options data would be fetched by btc_options_fetch.py in a full integration.")
+        # In a full integration, you might call fetch_btc_options_data here and process it.
+        # For now, we still fetch OHLCV data for BTC to keep the downstream flow working.
+        # The AgentManager will be responsible for calling the options fetcher.
+
     # Convert days to period string
     if days <= 7:
         period = "1wk"
