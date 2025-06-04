@@ -34,8 +34,9 @@ class TestRetryDecorators(unittest.TestCase):
         def test_func():
             return mock_func()
         
-        with self.assertRaises(RetryError):
+        with self.assertRaises(RetryError) as cm:
             test_func()
+        self.assertIsInstance(cm.exception.last_exception, ValueError)
         self.assertEqual(mock_func.call_count, 3)
 
     def test_retry_with_result_success(self):
