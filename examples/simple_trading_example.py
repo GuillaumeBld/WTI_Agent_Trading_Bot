@@ -75,10 +75,13 @@ def run_simple_trading_example():
     # Initialize agents
     manager.initialize_agents()
     
-    # Fetch market data
+    # Fetch market or options data for the configured symbol
     logger.info("Fetching market data...")
-    market_data = manager.fetch_market_data(symbol=config["trading"]["symbol"], days=config["data_fetch"]["days"])
-    logger.info(f"Fetched {len(market_data)} market data records")
+    manager.fetch_data_for_symbol(
+        symbol=config["trading"]["symbol"],
+        days=config["data_fetch"]["days"],
+    )
+    logger.info("Market data fetch completed")
     
     # Analyze sentiment
     logger.info("Analyzing sentiment...")

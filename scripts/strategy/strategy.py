@@ -20,7 +20,6 @@ from agent_interfaces import TradingSignal, VolatilitySmirkResult
 
 # Import utility functions
 from utils import get_data_directory, get_db_connection, setup_logger
-import os
 
 # Use relative paths with utility functions
 INDICATORS_DATA_PATH = os.path.join(get_data_directory(), "crude_oil_with_indicators.csv")
