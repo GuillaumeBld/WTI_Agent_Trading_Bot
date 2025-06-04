@@ -5,7 +5,7 @@
 This project is a Python-based trading bot designed to trade Bitcoin (BTC) by analyzing the volatility smirk in the BTC options market. The volatility smirk—a pattern where implied volatility (IV) differs across strike prices for the same expiry—can provide insights into market sentiment and potential future price movements.
 
 The bot aims to:
-1.  Fetch BTC options market data (chain data including strike prices, IVs, volume, open interest, and greeks) and the current BTC spot price, intended for use with data providers like Refinitiv API.
+1.  Fetch BTC options market data (chain data including strike prices, IVs, volume, open interest, and greeks) and the current BTC spot price directly from the Refinitiv API.
 2.  Analyze the fetched options data to identify and quantify the volatility smirk.
 3.  Generate trading signals (BUY/SELL/HOLD BTC) based on the interpretation of the smirk.
 4.  Execute trades through an exchange API (integration for execution is currently basic and records trades locally).
@@ -16,7 +16,7 @@ This project was originally a trading bot for WTI Crude Oil, using sentiment ana
 
 ## Core Components
 
-*   **Data Fetching**: Scripts to obtain options chain data for BTC. Currently uses a mock data generator but is designed for integration with APIs like Refinitiv.
+*   **Data Fetching**: Scripts obtain options chain data for BTC directly from the Refinitiv API (with a mock fallback if the API is unreachable).
 *   **Volatility Smirk Analysis**: Modules to calculate and interpret the volatility smirk from the options data.
 *   **Strategy**: Implements trading logic based on signals derived from the smirk analysis.
 *   **Agent Manager**: Orchestrates the various components of the bot.

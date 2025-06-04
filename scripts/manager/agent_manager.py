@@ -130,9 +130,16 @@ class AgentManager:
                     logger.error(f"API key environment variable {api_key_env_var} not set.")
                     return
 
-                monitored_expiries = self.config.get('volatility_analysis', {}).get('monitored_expiries', ["1D", "7D"])
-                
-                options_chain_list = fetch_btc_options_data(api_key=api_key, symbol=symbol, expiries=monitored_expiries)
+                va_config = self.config.get('volatility_analysis', {})
+                monitored_expiries = va_config.get('monitored_expiries', ["1D", "7D"])
+                data_url = va_config.get('data_source_url')
+
+                options_chain_list = fetch_btc_options_data(
+                    api_key=api_key,
+                    symbol=symbol,
+                    expiries=monitored_expiries,
+                    base_url=data_url,
+                )
                 
                 if not options_chain_list:
                     logger.error(f"Failed to fetch BTC options data for {symbol}")

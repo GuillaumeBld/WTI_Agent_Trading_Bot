@@ -1,27 +1,25 @@
+"""Utilities for fetching BTC options data from Refinitiv."""
+
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-import random # Keep for minor variations if needed, but primary data is structured
-import json # For handling JSON-like structures
+import random  # Keep for mock fallback
+import json
+import os
+import logging
+import requests
 
 # Assuming agent_interfaces.py is in the parent directory of 'scripts' or accessible in PYTHONPATH
 # Adjust the import path as necessary based on your project structure.
 # If 'scripts' is a package, and 'agent_interfaces.py' is at the root:
 from agent_interfaces import OptionsContractData, OptionsChainData
 
-def fetch_btc_options_data(api_key: str, symbol: str, expiries: List[str]) -> List[OptionsChainData]:
-    """
-    MOCK IMPLEMENTATION: Simulates fetching BTC options data from a Refinitiv-like API.
+logger = logging.getLogger(__name__)
 
-    Args:
-        api_key (str): The API key for the options data provider. (Not used in mock)
-        symbol (str): The underlying symbol (e.g., "BTC").
-        expiries (List[str]): List of expiries to fetch (e.g., ["1D", "7D", "30D"]).
 
-    Returns:
-        List[OptionsChainData]: A list of OptionsChainData objects, one for each requested expiry.
-    """
-    print(f"Mock Refinitiv API fetch for {symbol} options with API key: {api_key[:4]}... for expiries: {expiries}")
-    
+def _mock_fetch_btc_options_data(symbol: str, expiries: List[str]) -> List[OptionsChainData]:
+    """Return mock options data. Used as a fallback when API calls fail."""
+    logger.info("Using mock Refinitiv API data.")
+
     all_chains_data = []
     base_spot_price = 62500.75  # Consistent base spot price
 
@@ -117,6 +115,81 @@ def fetch_btc_options_data(api_key: str, symbol: str, expiries: List[str]) -> Li
         all_chains_data.append(chain_for_expiry)
         
     return all_chains_data
+
+
+def _parse_refinitiv_response(data: Dict[str, Any], symbol: str) -> OptionsChainData:
+    """Parse a Refinitiv API response into :class:`OptionsChainData`."""
+    spot_price = float(data.get("spotPrice") or data.get("underlyingPrice") or 0)
+    expiry_str = data.get("expiryDate") or data.get("expiration")
+    if expiry_str is None:
+        expiry_date = datetime.utcnow()
+    else:
+        expiry_date = datetime.fromisoformat(expiry_str.split("T")[0])
+
+    contracts = []
+    for contract in data.get("optionChain", data.get("options", [])):
+        last_trade = contract.get("lastTrade", {})
+        if isinstance(last_trade, dict):
+            last_price = last_trade.get("price")
+        else:
+            last_price = contract.get("lastPrice")
+
+        contracts.append(
+            OptionsContractData(
+                strike_price=float(contract.get("strikePrice") or contract.get("strike")),
+                contract_type=contract.get("optionType") or contract.get("type"),
+                implied_volatility=contract.get("impliedVolatility") or contract.get("iv"),
+                volume=contract.get("volume"),
+                open_interest=contract.get("openInterest"),
+                delta=contract.get("delta"),
+                gamma=contract.get("gamma"),
+                theta=contract.get("theta"),
+                vega=contract.get("vega"),
+                last_traded_price=last_price,
+            )
+        )
+
+    return OptionsChainData(
+        underlying_symbol=symbol,
+        spot_price=spot_price,
+        expiry_date=expiry_date,
+        contracts=contracts,
+    )
+
+
+def fetch_btc_options_data(
+    api_key: str,
+    symbol: str,
+    expiries: List[str],
+    base_url: Optional[str] = None,
+) -> List[OptionsChainData]:
+    """Fetch BTC options data from the Refinitiv API.
+
+    If the API request fails, a mock dataset will be returned so other parts of
+    the system can continue to operate.
+    """
+
+    if base_url is None:
+        base_url = "https://api.refinitiv.com/market-data/v1/options/btc-usd"
+
+    headers = {"Authorization": f"Bearer {api_key}"}
+    chains: List[OptionsChainData] = []
+
+    for expiry in expiries:
+        params = {"symbol": symbol, "expiry": expiry}
+        try:
+            resp = requests.get(base_url, headers=headers, params=params, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            chain = _parse_refinitiv_response(data, symbol)
+            chains.append(chain)
+        except Exception as exc:
+            logger.error("Refinitiv API error for %s %s: %s", symbol, expiry, exc)
+
+    if not chains:
+        chains = _mock_fetch_btc_options_data(symbol, expiries)
+
+    return chains
 
 # Example usage (optional, for testing the script directly)
 if __name__ == "__main__":
