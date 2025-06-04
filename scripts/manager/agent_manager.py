@@ -144,7 +144,7 @@ class AgentManager:
 
             except Exception as e:
                 logger.error(f"Error fetching BTC options data for {symbol}: {e}")
-        else: # Existing logic for OHLCV data (e.g., for WTI)
+        else: # Existing logic for OHLCV data for non-BTC assets
             try:
                 df = fetch_market_data(days=days, symbol=symbol) # Original OHLCV fetcher
                 if df is None:
@@ -167,7 +167,6 @@ class AgentManager:
                     # A cleaner way: have a separate market_data_queue for OHLCV if both are active.
                     # Let's assume for this refactor, if symbol is not BTC, this queue won't be used by new logic.
                     self.options_data_queue.put(data_item) # This will mix types if not careful.
-                                                       # Or use a different queue if WTI is still to be traded.
 
                 logger.info(f"Fetched and queued {len(market_data_list)} OHLCV records for {symbol}")
             except Exception as e:
@@ -341,15 +340,15 @@ class AgentManager:
             # This consumes from self.volatility_analysis_queue and puts TradingSignal into self.signal_queue
             signals = self.generate_trading_signals() 
         else:
-            # Placeholder for non-BTC (e.g., WTI crude oil) path if it were to be fully supported alongside BTC.
-            # This might involve a different analysis (e.g., old sentiment) and signal generation path.
+            # Placeholder for non-BTC asset path if it were to be fully supported alongside BTC.
+            # This might involve a different analysis method and signal generation path.
             # For the current plan focused on BTC, this path results in no signals.
             logger.info(f"Symbol {current_symbol} is not BTC-USD. Standard OHLCV data was fetched. " +
                         "Skipping BTC-specific volatility/smirk-based signal generation for this cycle.")
-            # To make this path work for WTI, you would need to:
+            # To make this path work for other assets you would need to:
             # 1. Ensure OHLCV MarketData from options_data_queue is processed by a different analysis method.
             # 2. That method puts its results (e.g. old SentimentResult) to a queue.
-            # 3. generate_trading_signals (or another method) consumes that for WTI strategy.
+            # 3. generate_trading_signals (or another method) consumes that strategy.
             # This is out of scope for the current BTC refactoring.
             pass # No signals generated for non-BTC in this flow.
 

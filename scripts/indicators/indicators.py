@@ -128,7 +128,7 @@ def main():
     logger.info("Starting technical indicators calculation...")
     
     data_dir = get_data_directory()
-    data_csv_path = os.path.join(data_dir, "crude_oil_data.csv")
+    data_csv_path = os.path.join(data_dir, "btc_data.csv")
     db_path = os.path.join(data_dir, "market_data.db")
     
     df = load_data(data_csv_path)
@@ -140,7 +140,7 @@ def main():
     df_with_indicators = calculate_indicators(df)
     
     # Optionally, save to CSV for verification
-    output_csv = os.path.join(data_dir, "crude_oil_with_indicators.csv")
+    output_csv = os.path.join(data_dir, "btc_with_indicators.csv")
     try:
         df_with_indicators.to_csv(output_csv, index=False)
         logger.info(f"Indicators saved to CSV at {output_csv}")

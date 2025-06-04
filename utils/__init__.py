@@ -1,5 +1,5 @@
 """
-Utils package for WTI Agent Trading Bot.
+Utils package for the BTC Trading Bot.
 
 This package contains utility modules for the trading bot:
 - retry: Provides retry functionality for handling transient errors

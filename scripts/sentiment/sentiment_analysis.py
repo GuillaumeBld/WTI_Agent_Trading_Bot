@@ -1,7 +1,7 @@
 """
-Enhanced Sentiment Analysis Module for WTI Crude Oil Trading
+Enhanced Sentiment Analysis Module for BTC Bitcoin Trading
 
-This module analyzes sentiment from news articles related to WTI crude oil
+This module analyzes sentiment from news articles related to BTC bitcoin
 using DistilBERT and generates trading signals based on the sentiment analysis.
 
 Note: This is a mock version that returns dummy data for testing purposes.
@@ -31,9 +31,9 @@ class SentimentAnalyzer:
         self.db_path = os.path.join(get_data_directory(), "market_data.db")
         logger.info("Initialized mock SentimentAnalyzer")
         
-    def fetch_news(self, query: str = "crude oil WTI", days: int = 7) -> List[Dict]:
+    def fetch_news(self, query: str = "bitcoin BTC", days: int = 7) -> List[Dict]:
         """
-        Mock function to fetch news articles related to crude oil
+        Mock function to fetch news articles related to bitcoin
         
         Args:
             query (str): Search query (not used in mock)
@@ -54,7 +54,7 @@ class SentimentAnalyzer:
             },
             {
                 "title": "US crude inventories show unexpected draw",
-                "description": "US crude oil inventories showed an unexpected draw last week, indicating stronger demand.",
+                "description": "US bitcoin inventories showed an unexpected draw last week, indicating stronger demand.",
                 "publishedAt": (datetime.now() - timedelta(days=2)).isoformat(),
                 "source": {"name": "Mock Energy Report"}
             },
@@ -276,13 +276,13 @@ def load_knowledge_base(filename="energy_knowledge.json") -> Dict:
     try:
         with open(data_path, "r") as f:
             knowledge = json.load(f)
-        if not knowledge or not knowledge.get("wti_crude_oil") or not knowledge.get("energy_market"):
+        if not knowledge or not knowledge.get("btc_market") or not knowledge.get("energy_market"):
             logger.warning(f"Knowledge base in {data_path} is incomplete. Populating with default content.")
             default_kb = {
-                "wti_crude_oil": {
-                    "definition": "West Texas Intermediate (WTI) is a grade of crude oil used as a benchmark in oil pricing.",
+                "btc_market": {
+                    "definition": "West Texas Intermediate (BTC) is a grade of bitcoin used as a benchmark in oil pricing.",
                     "characteristics": {
-                        "type": "Light sweet crude oil",
+                        "type": "Light sweet bitcoin",
                         "api_gravity": "Approximately 39.6 degrees",
                         "sulfur_content": "Approximately 0.24%",
                         "refining": "Easier and less costly to refine",
@@ -293,7 +293,7 @@ def load_knowledge_base(filename="energy_knowledge.json") -> Dict:
                     }
                 },
                 "energy_market": {
-                    "crude_oil_segment": {
+                    "crypto_market_segment": {
                         "global_demand": "Approximately 102.3 million barrels per day (IEA projection)"
                     },
                     "price_influencing_factors": {
@@ -319,7 +319,7 @@ def load_knowledge_base(filename="energy_knowledge.json") -> Dict:
         return knowledge
     except Exception as e:
         logger.error(f"Error loading knowledge base: {e}. Using default knowledge base.")
-        default_kb = {"wti_crude_oil": {}, "energy_market": {}}
+        default_kb = {"btc_market": {}, "energy_market": {}}
         with open(data_path, "w") as f:
             json.dump(default_kb, f, indent=2)
         return default_kb
@@ -343,7 +343,7 @@ def score_article(article: Dict, kb: Dict) -> int:
     return score
 
 # News fetching function with dynamic query expansion and exponential backoff
-def fetch_crude_oil_news(query: str = "crude oil WTI prices market trends news",
+def fetch_btc_news(query: str = "bitcoin BTC prices market trends news",
                          start_date: Optional[datetime] = None, 
                          end_date: Optional[datetime] = None,
                          days_back: int = 1) -> List[Dict]:
@@ -424,9 +424,9 @@ def fetch_crude_oil_news(query: str = "crude oil WTI prices market trends news",
 
     # If no articles found, try a broader query once
     if not all_articles:
-        broader_query = "crude oil WTI OR Brent OR oil market"
+        broader_query = "bitcoin BTC OR Brent OR oil market"
         logger.warning(f"No articles found for query '{query}'. Retrying with broader query: '{broader_query}'")
-        return fetch_crude_oil_news(query=broader_query, start_date=start_date, end_date=end_date, days_back=days_back)
+        return fetch_btc_news(query=broader_query, start_date=start_date, end_date=end_date, days_back=days_back)
 
     # Process articles with pandas to validate timestamps
     df = pd.DataFrame(all_articles)
@@ -610,15 +610,15 @@ def store_sentiment_in_db(sentiment_data: List[Dict], db_path: str = "market_dat
         logger.error(f"Database error: {e}")
 
 # Main agent class
-class CrudeOilSentimentAgent:
+class BtcSentimentAgent:
     def __init__(self, knowledge_base: Dict):
         self.knowledge_base = knowledge_base
-        self.fetch_news = fetch_crude_oil_news
+        self.fetch_news = fetch_btc_news
         self.analyze_sentiment = analyze_sentiment
         self.extract_events = lambda text: extract_events(text, self.knowledge_base)
 
     def run_analysis(self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, 
-                     query: str = "crude oil WTI prices market trends news", save: bool = False):
+                     query: str = "bitcoin BTC prices market trends news", save: bool = False):
         new_articles = self.fetch_news(query=query, start_date=start_date, end_date=end_date, 
                                        days_back=1 if not (start_date and end_date) else 0)
         if not new_articles:
@@ -678,14 +678,14 @@ class CrudeOilSentimentAgent:
         elif "inventory" in events_str and "draw" in all_text:
             decision = "Buy"
 
-        wti_info = self.knowledge_base.get("wti_crude_oil", {})
+        btc_info = self.knowledge_base.get("btc_market", {})
         market_info = self.knowledge_base.get("energy_market", {})
         context = (
             f"Context from Knowledge Base:\n"
-            f"- WTI is {wti_info.get('characteristics', {}).get('type', 'Light sweet crude oil')} "
-            f"with delivery at {wti_info.get('characteristics', {}).get('delivery_point', 'Cushing, Oklahoma, USA')}.\n"
-            f"- 2025 production estimate: {wti_info.get('production', {}).get('2025_production_estimate', 'Approximately 13.4 million barrels per day (EIA projection)')}.\n"
-            f"- Global demand: {market_info.get('crude_oil_segment', {}).get('global_demand', 'Approximately 102.3 million barrels per day (IEA projection)')}.\n"
+            f"- BTC is {btc_info.get('characteristics', {}).get('type', 'Light sweet bitcoin')} "
+            f"with delivery at {btc_info.get('characteristics', {}).get('delivery_point', 'Cushing, Oklahoma, USA')}.\n"
+            f"- 2025 production estimate: {btc_info.get('production', {}).get('2025_production_estimate', 'Approximately 13.4 million barrels per day (EIA projection)')}.\n"
+            f"- Global demand: {market_info.get('crypto_market_segment', {}).get('global_demand', 'Approximately 102.3 million barrels per day (IEA projection)')}.\n"
             f"- Influenced by supply factors: {', '.join(market_info.get('price_influencing_factors', {}).get('supply', []))}\n"
             f"- Influenced by demand factors: {', '.join(market_info.get('price_influencing_factors', {}).get('demand', []))}"
         )
@@ -777,14 +777,14 @@ class CrudeOilSentimentAgent:
         elif "inventory" in events_str and "draw" in all_text:
             decision = "Buy"
 
-        wti_info = self.knowledge_base.get("wti_crude_oil", {})
+        btc_info = self.knowledge_base.get("btc_market", {})
         market_info = self.knowledge_base.get("energy_market", {})
         context = (
             f"Context from Knowledge Base:\n"
-            f"- WTI is {wti_info.get('characteristics', {}).get('type', 'Light sweet crude oil')} "
-            f"with delivery at {wti_info.get('characteristics', {}).get('delivery_point', 'Cushing, Oklahoma, USA')}.\n"
-            f"- 2025 production estimate: {wti_info.get('production', {}).get('2025_production_estimate', 'Approximately 13.4 million barrels per day (EIA projection)')}.\n"
-            f"- Global demand: {market_info.get('crude_oil_segment', {}).get('global_demand', 'Approximately 102.3 million barrels per day (IEA projection)')}.\n"
+            f"- BTC is {btc_info.get('characteristics', {}).get('type', 'Light sweet bitcoin')} "
+            f"with delivery at {btc_info.get('characteristics', {}).get('delivery_point', 'Cushing, Oklahoma, USA')}.\n"
+            f"- 2025 production estimate: {btc_info.get('production', {}).get('2025_production_estimate', 'Approximately 13.4 million barrels per day (EIA projection)')}.\n"
+            f"- Global demand: {market_info.get('crypto_market_segment', {}).get('global_demand', 'Approximately 102.3 million barrels per day (IEA projection)')}.\n"
             f"- Influenced by supply factors: {', '.join(market_info.get('price_influencing_factors', {}).get('supply', []))}\n"
             f"- Influenced by demand factors: {', '.join(market_info.get('price_influencing_factors', {}).get('demand', []))}"
         )
@@ -840,12 +840,12 @@ def parse_date(date_str: str) -> datetime:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Crude Oil Sentiment Analysis Bot with Enhanced Features',
+        description='Bitcoin Sentiment Analysis Bot with Enhanced Features',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument('--start_date', type=parse_date, help='Start date for news analysis (YYYY-MM-DD)')
     parser.add_argument('--end_date', type=parse_date, help='End date for news analysis (YYYY-MM-DD)')
-    parser.add_argument('--query', default="crude oil WTI prices market trends news", help='Search query for news')
+    parser.add_argument('--query', default="bitcoin BTC prices market trends news", help='Search query for news')
     parser.add_argument('--save', action='store_true', help='Store sentiment data in SQLite database')
     args = parser.parse_args()
 
@@ -856,7 +856,7 @@ def main():
     logger.info(f"API key loaded: {api_key[:4]}... (partial for security)")
 
     knowledge_base = load_knowledge_base()
-    agent = CrudeOilSentimentAgent(knowledge_base)
+    agent = BtcSentimentAgent(knowledge_base)
     result = agent.run_analysis(
         start_date=args.start_date,
         end_date=args.end_date,

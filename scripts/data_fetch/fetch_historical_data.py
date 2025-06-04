@@ -22,7 +22,7 @@ logger = setup_logger("fetch_historical_data", os.path.join("logs", "fetch_histo
 
 @retry(max_tries=3, delay=2.0, backoff=2.0, exceptions=[Exception], logger_name="fetch_historical_data")
 def fetch_and_save_data(
-    symbol: str = "CL=F",
+    symbol: str = "BTC-USD",
     period: str = "1y",
     interval: str = "1h",
     data_path: Optional[str] = None
@@ -32,7 +32,7 @@ def fetch_and_save_data(
     This function is decorated with retry to handle transient network errors.
     
     Args:
-        symbol (str): Symbol to fetch data for (default: "CL=F" for WTI Crude Oil)
+        symbol (str): Symbol to fetch data for (default: "BTC-USD")
         period (str): Period to fetch data for (e.g., "1d", "1wk", "1mo", "1y", "max")
         interval (str): Interval between data points (e.g., "1m", "5m", "1h", "1d")
         data_path (str, optional): Path to save the data to. If None, uses default path.
@@ -97,7 +97,7 @@ def fetch_and_save_data(
 
 @retry_with_result(max_tries=3, delay=2.0, backoff=2.0, validator=lambda df: df is not None and len(df) > 0, logger_name="fetch_historical_data")
 def fetch_data_with_retry(
-    symbol: str = "CL=F",
+    symbol: str = "BTC-USD",
     period: str = "1y",
     interval: str = "1h"
 ) -> Optional[pd.DataFrame]:
@@ -106,7 +106,7 @@ def fetch_data_with_retry(
     This function will retry until valid data is returned or max attempts are reached.
     
     Args:
-        symbol (str): Symbol to fetch data for (default: "CL=F" for WTI Crude Oil)
+        symbol (str): Symbol to fetch data for (default: "BTC-USD")
         period (str): Period to fetch data for (e.g., "1d", "1wk", "1mo", "1y", "max")
         interval (str): Interval between data points (e.g., "1m", "5m", "1h", "1d")
         
@@ -146,7 +146,7 @@ def main():
     
     # Test fetching data
     success = fetch_and_save_data(
-        symbol="CL=F",
+        symbol="BTC-USD",
         period="1mo",
         interval="1h"
     )

@@ -210,13 +210,13 @@ class InvestmentTracker:
         # For now, it's a placeholder that just logs the current portfolio
         self.display_portfolio()
 
-    def process_trade(self, symbol: str = "CL=F"):
+    def process_trade(self, symbol: str = "BTC-USD"):
         """
         Manually input trade details with position sizing and max open trades check.
         For BUY trades, the trade size is automatically calculated as RISK_PER_TRADE * current balance.
         
         Args:
-            symbol (str, optional): Symbol to trade. Defaults to "CL=F" (WTI Crude Oil).
+            symbol (str, optional): Symbol to trade. Defaults to "BTC-USD".
         """
         trade_type = input("Enter trade type (BUY/SELL): ").strip().upper()
         if trade_type not in ["BUY", "SELL"]:

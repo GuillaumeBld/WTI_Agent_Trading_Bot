@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Backtesting Module for WTI Crude Oil Trading System
+Backtesting Module for BTC Trading System
 
 This module loads price data from CSV, loads trading signals from SQLite,
 executes a backtest simulation with real portfolio updates and risk management,
@@ -16,6 +16,7 @@ import csv
 import numpy as np
 import yfinance as yf
 import pandas as pd
+from utils import get_data_directory
 
 # Configure logging for backtesting
 logging.basicConfig(
@@ -27,8 +28,9 @@ logging.basicConfig(
 ###############################################################################
 # 1. Define absolute paths for your CSV and DB
 ###############################################################################
-PRICE_DATA_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/crude_oil_data.csv"
-DB_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/market_data.db"
+data_dir = get_data_directory()
+PRICE_DATA_PATH = os.path.join(data_dir, "btc_data.csv")
+DB_PATH = os.path.join(data_dir, "market_data.db")
 
 ###############################################################################
 # 2. Load Price Data from CSV (with error handling for non-numeric rows)
@@ -95,19 +97,19 @@ def load_signals_sqlite(db_path=DB_PATH, table_name="trading_signals"):
 ###############################################################################
 # 4. Helper Functions for ATR and Sentiment
 ###############################################################################
-def fetch_wti_atr():
+def fetch_btc_atr():
     """
-    Fetch the Average True Range (ATR) for WTI crude oil using 14 days of Yahoo Finance data.
+    Fetch the Average True Range (ATR) for BTC using 14 days of Yahoo Finance data.
     """
     try:
-        ticker = yf.Ticker("CL=F")
+        ticker = yf.Ticker("BTC-USD")
         data = ticker.history(period="14d")
         true_range = np.abs(data["High"] - data["Low"])
         atr = true_range.rolling(window=14).mean().iloc[-1]
-        logging.info(f"Fetched WTI ATR: {atr:.2f}")
+        logging.info(f"Fetched BTC ATR: {atr:.2f}")
         return atr
     except Exception as e:
-        logging.error(f"Error fetching WTI ATR: {e}")
+        logging.error(f"Error fetching BTC ATR: {e}")
         return None
 
 def fetch_sentiment_adjustment(db_path=DB_PATH):
@@ -315,7 +317,7 @@ def save_results_to_csv(results, filepath):
 # 8. Main Entry Point
 ###############################################################################
 def main():
-    print("WTI Crude Oil Trading System - Backtesting Module")
+    print("BTC Trading System - Backtesting Module")
     print("===================================================")
     
     # 1. Load price data from CSV.

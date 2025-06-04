@@ -41,7 +41,7 @@ def run_simple_trading_example():
         "trading": {
             "mode": "paper",
             "interval": 3600,
-            "symbol": "CL=F",
+            "symbol": "BTC-USD",
             "initial_balance": 100000.0,
             "max_open_trades": 10,
             "risk_per_trade": 0.05
