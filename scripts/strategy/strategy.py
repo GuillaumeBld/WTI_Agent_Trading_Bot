@@ -15,7 +15,8 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Union
 
 # Import the TradingSignal interface
-from ..agent_interfaces import TradingSignal, VolatilitySmirkResult
+# Import interfaces from the project root
+from agent_interfaces import TradingSignal, VolatilitySmirkResult
 
 # Import utility functions
 from utils import get_data_directory, get_db_connection, setup_logger
