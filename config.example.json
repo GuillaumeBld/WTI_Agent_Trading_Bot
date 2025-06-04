@@ -23,19 +23,14 @@
         }
     },
     "satellite": {
-        "use_satellite": true,
-        "locations": [
-            "cushing_oklahoma",
-            "strait_of_hormuz",
-            "houston_ship_channel",
-            "saudi_aramco_abqaiq"
-        ],
+        "use_satellite": false,
+        "locations": [],
         "update_interval": 86400
     },
     "strategy": {
         "use_ml": true,
         "use_sentiment": true,
-        "use_satellite": true,
+        "use_satellite": false,
         "signal_threshold": 0.7,
         "indicators": {
             "rsi": {

@@ -43,14 +43,14 @@ DB_PATH = os.path.join("data", "market_data.db")
 # ATR Calculation with Retry
 # -----------------------------
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-def fetch_wti_atr():
+def fetch_btc_atr():
     """
-    Fetch the Average True Range (ATR) for WTI crude oil using 30 days of Yahoo Finance data.
+    Fetch the Average True Range (ATR) for BTC using 30 days of Yahoo Finance data.
     Uses a rolling window equal to the minimum of 14 or the number of valid rows.
     If the ATR calculation results in NaN, a default ATR value of 1.0 is returned.
     """
     try:
-        ticker = yf.Ticker("CL=F")
+        ticker = yf.Ticker("BTC-USD")
         data = ticker.history(period="30d")
         print("Fetched data for ATR calculation:")
         print(f"Data shape: {data.shape}")
@@ -74,10 +74,10 @@ def fetch_wti_atr():
         if np.isnan(atr):
             logging.error("ATR calculation resulted in NaN. Using default ATR value of 1.0.")
             return 1.0
-        logging.info(f"Fetched WTI ATR: {atr:.2f}")
+        logging.info(f"Fetched BTC ATR: {atr:.2f}")
         return atr
     except Exception as e:
-        logging.error(f"Error fetching WTI ATR: {e}")
+        logging.error(f"Error fetching BTC ATR: {e}")
         return 1.0
 
 # -----------------------------
@@ -203,7 +203,7 @@ def execute_trade(signal):
     current_price = signal['Price']
     
     # Calculate dynamic risk parameters
-    atr = fetch_wti_atr()
+    atr = fetch_btc_atr()
     sentiment_adj = fetch_sentiment_adjustment()
     
     # Define base risk levels (these numbers can be calibrated)

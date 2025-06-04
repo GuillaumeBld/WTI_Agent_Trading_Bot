@@ -164,10 +164,10 @@ class WalkthroughGenerator:
         logger.info("Step 1: Introduction")
         time.sleep(1)  # Give time to switch to the terminal
         intro_text = """
-        WTI Crude Oil Trading System Walkthrough
+        BTC Trading System Walkthrough
         
         This video demonstrates the key features and functionality of the
-        WTI Crude Oil Trading System, including:
+        BTC Trading System, including:
         
         1. Data acquisition
         2. Technical indicator calculation
@@ -184,7 +184,7 @@ class WalkthroughGenerator:
         # Step 2: Data Acquisition
         logger.info("Step 2: Data Acquisition")
         time.sleep(1)
-        self.capture_screenshot("Data Acquisition", "Fetching historical data for WTI Crude Oil Futures using Yahoo Finance API")
+        self.capture_screenshot("Data Acquisition", "Fetching historical data for BTC using Yahoo Finance API")
         self.add_frame(os.path.join(self.screenshots_dir, f"screenshot_{self.screenshot_count-1:03d}.png"))
         
         # Run data fetch script
@@ -212,7 +212,7 @@ class WalkthroughGenerator:
             # Plot price
             plt.subplot(4, 1, 1)
             plt.plot(dates, prices)
-            plt.title('Crude Oil Price')
+            plt.title('BTC Price')
             plt.grid(True)
             
             # Plot RSI
@@ -318,8 +318,8 @@ class WalkthroughGenerator:
         time.sleep(1)
         conclusion_text = """
         Conclusion
-        
-        This walkthrough demonstrated the key components of the WTI Crude Oil Trading System:
+
+        This walkthrough demonstrated the key components of the BTC Trading System:
         
         1. Data acquisition from Yahoo Finance
         2. Technical indicator calculation (RSI, MACD, ADX, EMAs)

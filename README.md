@@ -10,10 +10,6 @@ The bot aims to:
 3.  Generate trading signals (BUY/SELL/HOLD BTC) based on the interpretation of the smirk.
 4.  Execute trades through an exchange API (integration for execution is currently basic and records trades locally).
 
-## Original Project
-
-This project was originally a trading bot for WTI Crude Oil, using sentiment analysis from NewsAPI and DistilBERT. It has been repurposed and significantly refactored for BTC trading based on options data.
-
 ## Core Components
 
 *   **Data Fetching**: Scripts to obtain options chain data for BTC. Currently uses a mock data generator but is designed for integration with APIs like Refinitiv.

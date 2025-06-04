@@ -22,7 +22,7 @@ from utils import get_data_directory, get_db_connection, setup_logger
 import os
 
 # Use relative paths with utility functions
-INDICATORS_DATA_PATH = os.path.join(get_data_directory(), "crude_oil_with_indicators.csv")
+INDICATORS_DATA_PATH = os.path.join(get_data_directory(), "btc_with_indicators.csv")
 
 # Use relative path for SQLite database
 DB_PATH = os.path.join(get_data_directory(), "market_data.db")
@@ -378,7 +378,7 @@ def generate_signals_with_ml(data, model=None, use_sentiment=True) -> List[Tradi
                 print(f"Loaded sentiment data from {sentiment_file}")
             else:
                 print("No sentiment data found. Generating new sentiment analysis...")
-                news = analyzer.fetch_crude_oil_news()
+                news = analyzer.fetch_btc_news()
                 sentiment_results = analyzer.analyze_news_sentiment(news)
                 trading_signal = analyzer.get_trading_signal_from_sentiment(sentiment_results)
                 sentiment_data = {
@@ -481,7 +481,7 @@ def main():
     parser.set_defaults(sentiment=True)
     args = parser.parse_args()
     
-    print("WTI Crude Oil Trading System - ML Strategy")
+    print("BTC Trading System - ML Strategy")
     print("==========================================")
     
     # Use the absolute path for the CSV with indicators
@@ -514,6 +514,6 @@ def main():
     print(f"Sentiment analysis: {'Enabled' if args.sentiment else 'Disabled'}")
     print("You can now proceed with backtesting the ML strategy.")
 
-# Main function disabled as it's based on the old WTI/ML strategy.
+# Main function disabled as it's based on an old prototype ML strategy.
 # if __name__ == "__main__":
 #     main()

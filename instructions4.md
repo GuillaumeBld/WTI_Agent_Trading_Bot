@@ -122,7 +122,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     # Fetch historical market data (ensure this returns data in the expected format)
-    historical_data = fetch_market_data(days=365, symbol="CL=F")
+    historical_data = fetch_market_data(days=365, symbol="BTC-USD")
     if historical_data is None:
         logging.error("Historical data fetch failed.")
         return

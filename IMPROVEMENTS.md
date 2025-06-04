@@ -1,6 +1,6 @@
-# WTI Agent Trading Bot Improvements
+# BTC Trading Bot Improvements
 
-This document outlines the improvements made to the WTI Agent Trading Bot to enhance its robustness, portability, and deployability.
+This document outlines the improvements made to the BTC Trading Bot to enhance its robustness, portability, and deployability.
 
 ## 1. Fixed Hardcoded File Paths
 
@@ -9,7 +9,7 @@ The strategy module contained hardcoded absolute file paths that were specific t
 
 ```python
 # Absolute path to your CSV file with indicators:
-INDICATORS_DATA_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/crude_oil_with_indicators.csv"
+INDICATORS_DATA_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/btc_with_indicators.csv"
 
 # Absolute path to the SQLite database (where signals will be stored)
 DB_PATH = "/Users/guillaumebolivard/Documents/School/Loyola_U/Classes/Capstone_MS_Finance/Trading_challenge/trading_bot/data/market_data.db"
@@ -26,7 +26,7 @@ from utils import get_data_directory, get_db_connection, setup_logger
 import os
 
 # Use relative paths with utility functions
-INDICATORS_DATA_PATH = os.path.join(get_data_directory(), "crude_oil_with_indicators.csv")
+INDICATORS_DATA_PATH = os.path.join(get_data_directory(), "btc_with_indicators.csv")
 
 # Use relative path for SQLite database
 DB_PATH = os.path.join(get_data_directory(), "market_data.db")
@@ -44,7 +44,7 @@ Created a new utility module (`utils/retry.py`) that provides retry functionalit
 
 ```python
 @retry(max_tries=3, delay=2.0, backoff=2.0, exceptions=[Exception], logger_name="fetch_historical_data")
-def fetch_and_save_data(symbol: str = "CL=F", period: str = "1y", interval: str = "1h", data_path: Optional[str] = None) -> bool:
+def fetch_and_save_data(symbol: str = "BTC-USD", period: str = "1y", interval: str = "1h", data_path: Optional[str] = None) -> bool:
     # Function implementation with improved error handling
 ```
 

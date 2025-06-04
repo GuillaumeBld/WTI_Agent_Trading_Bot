@@ -24,13 +24,13 @@ logger = setup_logger("data_fetch", os.path.join("logs", "data_fetch.log"))
 #     os.makedirs(data_dir, exist_ok=True)
 #     return data_dir
 
-def fetch_market_data(days=365, symbol="CL=F") -> Optional[pd.DataFrame]:
+def fetch_market_data(days=365, symbol="BTC-USD") -> Optional[pd.DataFrame]:
     """
     Fetch market data using the robust fetch_historical_data implementation
     
     Args:
         days (int): Number of days of historical data to fetch
-        symbol (str): Symbol to fetch data for (default: "CL=F" for WTI Crude Oil)
+        symbol (str): Symbol to fetch data for (default: "BTC-USD")
         
     Returns:
         Optional[pd.DataFrame]: DataFrame with market data or None if fetch failed
@@ -104,7 +104,7 @@ def convert_to_market_data(df: pd.DataFrame) -> List[MarketData]:
     logger.info(f"Converted {len(market_data_list)} records to MarketData objects")
     return market_data_list
 
-def save_data_to_csv(df: pd.DataFrame, filename: str = "crude_oil_data.csv") -> bool:
+def save_data_to_csv(df: pd.DataFrame, filename: str = "btc_data.csv") -> bool:
     """
     Save DataFrame to CSV file
     
@@ -166,10 +166,10 @@ def save_data_to_sqlite(df: pd.DataFrame, db_name: str = "market_data.db", table
         return False
 
 def main():
-    logger.info("WTI Crude Oil Trading Bot - Market Data Fetching")
+    logger.info("BTC Trading Bot - Market Data Fetching")
     logger.info("==================================================")
     
-    df = fetch_market_data(days=365, symbol="CL=F")
+    df = fetch_market_data(days=365, symbol="BTC-USD")
     if df is None:
         logger.error("Market data could not be fetched. Exiting.")
         return

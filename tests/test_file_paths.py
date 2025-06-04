@@ -24,7 +24,7 @@ class TestFilePaths(unittest.TestCase):
         """Test that INDICATORS_DATA_PATH is using relative paths with utility functions."""
         # Check that the path is constructed using get_data_directory
         data_dir = get_data_directory()
-        expected_path = os.path.join(data_dir, "crude_oil_with_indicators.csv")
+        expected_path = os.path.join(data_dir, "btc_with_indicators.csv")
         
         self.assertEqual(INDICATORS_DATA_PATH, expected_path)
         

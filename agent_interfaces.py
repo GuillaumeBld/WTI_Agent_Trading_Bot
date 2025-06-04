@@ -35,15 +35,6 @@ class SentimentResult(BaseModel):
     class Config:
         orm_mode = True
 
-class SatelliteData(BaseModel):
-    date: datetime
-    location: str
-    metric_type: str  # e.g., "oil_storage", "tanker_count"
-    value: float
-    confidence: float  # Confidence level (0.0 to 1.0)
-    
-    class Config:
-        orm_mode = True
 
 class TradeExecution(BaseModel):
     date: datetime

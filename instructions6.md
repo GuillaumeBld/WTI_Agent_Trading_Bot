@@ -43,7 +43,7 @@ In this step, we will implement automation to run our trading bot continuously, 
            logging.info("Starting new trading cycle...")
            
            # 1. Fetch market data
-           data = fetch_market_data(days=30, symbol="CL=F")
+           data = fetch_market_data(days=30, symbol="BTC-USD")
            if data is None:
                logging.error("Failed to fetch market data. Retrying in next cycle.")
            else:

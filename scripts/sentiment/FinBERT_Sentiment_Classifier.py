@@ -10,7 +10,7 @@ Usage:
     >>> from finbert_sentiment_classifier import FinBERT_Sentiment_Classifier
     >>> classifier = FinBERT_Sentiment_Classifier()
     >>> texts = [
-    ...    "Oil prices surged today as market sentiment turned bullish.",
+    ...    "Bitcoin prices surged today as market sentiment turned bullish.",
     ...    "The earnings report was disappointing, and investors were uneasy."
     ... ]
     >>> results = classifier.predict(texts)
@@ -94,7 +94,7 @@ class FinBERT_Sentiment_Classifier:
 # For testing the classifier directly from the command line.
 if __name__ == "__main__":
     classifier = FinBERT_Sentiment_Classifier()
-    test_text = "Oil prices have surged today, signaling a bullish market."
+    test_text = "Bitcoin prices have surged today, signaling a bullish market."
     result = classifier.predict(test_text)
     print("Input text:", test_text)
     print("Prediction:", result)

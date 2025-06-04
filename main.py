@@ -75,7 +75,7 @@ def create_default_config(config_path: str) -> Dict[str, Any]:
         "trading": {
             "mode": "paper",
             "interval": 3600,
-            "symbol": "CL=F",
+            "symbol": "BTC-USD",
             "initial_balance": 100000.0,
             "max_open_trades": 10,
             "risk_per_trade": 0.05
@@ -89,18 +89,13 @@ def create_default_config(config_path: str) -> Dict[str, Any]:
             "news_days": 7
         },
         "satellite": {
-            "use_satellite": True,
-            "locations": [
-                "cushing_oklahoma",
-                "strait_of_hormuz",
-                "houston_ship_channel",
-                "saudi_aramco_abqaiq"
-            ]
+            "use_satellite": False,
+            "locations": []
         },
         "strategy": {
             "use_ml": True,
             "use_sentiment": True,
-            "use_satellite": True
+            "use_satellite": False
         },
         "risk": {
             "max_position_size": 0.05,
