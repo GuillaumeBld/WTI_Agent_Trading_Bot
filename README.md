@@ -5,7 +5,7 @@
 This project is a Python-based trading bot designed to trade Bitcoin (BTC) by analyzing the volatility smirk in the BTC options market. The volatility smirk—a pattern where implied volatility (IV) differs across strike prices for the same expiry—can provide insights into market sentiment and potential future price movements.
 
 The bot aims to:
-1.  Fetch BTC options market data (chain data including strike prices, IVs, volume, open interest, and greeks) and the current BTC spot price, intended for use with data providers like Refinitiv API.
+1.  Fetch BTC options market data (chain data including strike prices, IVs, volume, open interest, and greeks) and the current BTC spot price using the Deribit API.
 2.  Analyze the fetched options data to identify and quantify the volatility smirk.
 3.  Generate trading signals (BUY/SELL/HOLD BTC) based on the interpretation of the smirk.
 4.  Execute trades through an exchange API (integration for execution is currently basic and records trades locally).
@@ -16,11 +16,12 @@ This project was originally a trading bot for WTI Crude Oil, using sentiment ana
 
 ## Core Components
 
-*   **Data Fetching**: Scripts to obtain options chain data for BTC. Currently uses a mock data generator but is designed for integration with APIs like Refinitiv.
-*   **Volatility Smirk Analysis**: Modules to calculate and interpret the volatility smirk from the options data.
-*   **Strategy**: Implements trading logic based on signals derived from the smirk analysis.
-*   **Agent Manager**: Orchestrates the various components of the bot.
-*   **Trade Execution**: Basic module for recording trades (not fully integrated with live exchanges).
+*   **Institutional Data Pipeline**: Deribit client (`bot/data`) with optional authentication, request throttling, and on-disk caching surfaced through the `MarketDataPipeline` facade.
+*   **Volatility Smirk Analysis**: Research-grade analytics in `bot/analytics` capture skew, kurtosis, volatility surface fitting, and regime detection to inform trading signals.
+*   **Strategy Engine**: Modular feature ensemble in `bot/strategy` combines multiple alpha sources with configurable risk aversion and explainable outputs.
+*   **Risk & Portfolio Management**: `bot/risk` implements Kelly sizing, CVaR utilities, and Markdown risk reports for institutional-style governance.
+*   **Execution & Simulation**: Execution adapters in `bot/execution` and walk-forward backtesting helpers in `bot/backtesting` provide both live and research workflows.
+*   **Observability**: Lightweight metrics registry (`bot/observability`) and docs in `docs/` support operational visibility and interview-ready storytelling.
 
 ## Setup & Configuration
 
@@ -33,10 +34,10 @@ This project was originally a trading bot for WTI Crude Oil, using sentiment ana
     *   Copy `config.example.json` to `config.json`.
     *   Update `config.json` with your settings:
         *   Set the appropriate trading symbol (e.g., "BTC-USD").
-        *   Configure the `volatility_analysis` section, including your API key environment variable name for the options data provider (e.g., Refinitiv) and the API endpoint.
+        *   Configure the `volatility_analysis` section, including the expiries you would like to monitor.
         *   Set up other trading parameters like mode (paper, live), risk parameters, etc.
 4.  **Set API Keys:**
-    *   Ensure the environment variable for your options data API key (e.g., `REFINITIV_API_KEY`) is set in your environment.
+    *   Set `DERIBIT_CLIENT_ID` / `DERIBIT_CLIENT_SECRET` in your environment if you want to use authenticated Deribit endpoints. Public data works without credentials.
 
 ## Running the Bot
 
