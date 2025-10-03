@@ -35,6 +35,7 @@ keras>=2.4.0
 matplotlib>=3.4.0
 seaborn>=0.11.0
 plotly>=5.0.0
+scipy>=1.6.0
 
 # Testing
 pytest>=6.2.0
